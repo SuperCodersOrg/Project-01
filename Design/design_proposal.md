@@ -1,7 +1,7 @@
 # Project 01 – Design Proposal
 ## Project Objective
 
-The objective of this project is to design a reusable and memory-safe Data Structure Library consisting of DynamicArray, LinkedList, and HashMap implementations.
+The objective of this project is to design a reusable, generic and memory-safe Data Structure Library consisting of DynamicArray, LinkedList, and HashMap implementations.
 
 The proposed design supports explicit memory ownership. For the Design choices i evaluated multiple alternatives for each data structure and selected the one with best tradeoff .The selected designs are intended to serve as reusable building blocks for future projects such as Redis Lite, ensuring that the chosen implementations satisfy both current functional requirements and future use cases.
 
@@ -12,26 +12,44 @@ The proposed design extends the suggested interface with several modifications a
 ### 1. DynamicArray 
 Methods - 
 ```cpp
-DynamicArray() //construct empty array
-void append(int value) //append element
-void insert(int value, int index) //insert at position
-void remove(int index) //remove element
-bool get(int index, int& value) const //returns value
-void set(int value, int index) // modify value at given index
-void reserve(int newCapacity) //preallocate storage 
-int popBack() //return last element and remove it
-void clear() //remove all elements
-int size() const //return element count
-int capacity() const //return allocated capacity
-bool isEmpty() const //check whether empty 
-~DynamicArray() //destructor
-DynamicArray(const DynamicArray&) //copy constructor
-DynamicArray& operator=(const DynamicArray&) //assignment operator
+template<typename T>
+class DynamicArray {
+    private:
+        int size_;
+        int capacity_;
+        T *data;
+    public:
+        DynamicArray() //construct empty array
+        template<typename Iterator>
+        DynamicArray(Iterator start,Iterator end); //construct from any iterable container
+        void append(const T& value) //append element
+        void insert(const T& value, int index) //insert at position
+        void remove(int index) //remove element
+        T popBack() //return last element and remove it
+        bool get(int index,T& value) const //returns value safely
+        void set(int index,const T& value) // modify value at given index
+        void reserve(int newCapacity) //preallocate storage 
+        void clear() //remove all elements
+        int size() const //return element count
+        int capacity() const //return allocated capacity
+        bool isEmpty() const //check whether empty 
+        T& operator[](int index) // Raw and fast access
+        const T& operator[](int index) const 
+        T* begin() //return pointer to first element
+        T* end() //return pointer to one past last element
+        const T* begin() const //return pointer to first element
+        const T* end() const //return pointer to one past last element
+        ~DynamicArray() //destructor
+        DynamicArray(const DynamicArray&) //copy constructor
+        DynamicArray& operator=(const DynamicArray&) //assignment operator
+};
 ```
 - The get() method returns the requested element through a reference parameter and uses a boolean return value to indicate success, avoiding ambiguous sentinel values for invalid indices.  
 - The reserve() method enables preallocation of storage when the expected number of elements is known, reducing the number of reallocations during repeated insertions.  
 - A dedicated set() method separates modification from insertion operations.  
 - Utility functions such as `popBack()`,` clear()`,` capacity()`, and `isEmpty()` improve the usability and completeness of the Data Structure.
+- `begin()` and `end()` methods provide iterators for return pointers to start and past to end memory address.
+- `DynamicArray(Iterator start,Iterator end) `constructor allows construction from any iterable container.
 
 ---
 
@@ -40,20 +58,39 @@ The LinkedList is implemented as a singly linked structure while maintaining bot
 Methods - 
 
 ```cpp
-LinkedList() //construct empty linkedlist
-void insertFront(int value) //insert at front
-void insertBack(int value) //insert at end 
-void insert(int value, int index) //insert at position
-void removeFront() //remove first node
-void remove(int index) //remove node from a specific position
-int search(int value) const //search element
-void clear() //delete all nodes
-void print() const //display all contents
-int size() const //return node count
-bool isEmpty() const //check whether empty
-~LinkedList() //destructor
-LinkedList(const LinkedList&) //copy constructor
-LinkedList& operator=(const LinkedList&) //assignment operator
+template<typename T>
+class LinkedList {
+    private:
+        struct Node {
+            T data;
+            Node* next;
+            Node(const T& value)
+            {
+                data = value;
+                next = nullptr;
+            }
+        };
+        Node* head;
+        Node* tail;
+        int count;
+    public:
+        LinkedList() //construct empty linkedlist
+        template<typename Container>
+        LinkedList(const Container& container); //construct from any iterable container
+        void insertFront(const T& value) //insert at front
+        void insertBack(const T& value) //insert at end 
+        void insert(const T& value, int index) //insert at position
+        void removeFront() //remove first node
+        void remove(int index) //remove node from a specific position
+        int search(const T& value) const //search element
+        void clear() //delete all nodes
+        void print() const //display all contents
+        int size() const //return node count
+        bool isEmpty() const //check whether empty
+        ~LinkedList() //destructor
+        LinkedList(const LinkedList&) //copy constructor
+        LinkedList& operator=(const LinkedList&) //assignment operator
+};
 ```
 - The insertBack() method uses the tail pointer to achieve O(1) insertion at the end of the list, improving time complexity for common use cases.
 - The search() method returns the index of the found element or -1 if not found, providing more useful information than a simple boolean result.
@@ -66,11 +103,31 @@ Separate chaining using linked lists is selected as the collision handling strat
 Methods - 
 
 ```cpp
+template<typename Key,typename Value> //The key type must support hashing in order to be stored in the HashMap)
+class HashMap { 
+    private:
+    struct Node
+    {
+        Key key;
+        Value value;
+        Node* next;
+        Node(const Key& k, const Value& v)
+        {
+            key = k;
+            value = v;
+            next = nullptr;
+        }
+    };
+    DynamicArray<Node*> buckets;
+    int bucketCount;
+    int elementCount;
+
+public:
 HashMap() //construct empty hashmap with zero elements and initial bucket array
-void set(string key, string value) //insert or update key-value pair 
-bool get(string key, string& value) const //retrieve associated value 
-bool exists(string key) const //check key existence 
-void remove(string key) //remove key-value pair 
+void set(const Key& key, const Value& value) //insert or update key-value pair 
+bool get(const Key& key,Value& value) const //retrieve associated value 
+bool exists(const Key& key) const //check key existence 
+void remove(const Key& key) //remove key-value pair 
 void clear() //remove all entries 
 int size() const //return stored pair count 
 double loadFactor() const //return current load factor 
@@ -79,7 +136,7 @@ void rehash() //resize bucket table
 ~HashMap() //destructor 
 HashMap(const HashMap&) //copy constructor 
 HashMap& operator=(const HashMap&) //assignment operator
-
+};
 ```
 - The `get()` method returns the associated value through a reference parameter and uses a boolean return value to indicate success, avoiding ambiguous sentinel values for missing keys.
 - The `rehash()` method allows manual resizing of the bucket table which can be useful for avoiding collisions and improving overall performance.
@@ -358,7 +415,7 @@ HashMap& operator=(const HashMap&) //assignment operator
 # Section 4 – Design Decisions
 
 ### DynamicArray
-
+* Implemented as a class template (template<typename T>), allowing the same implementation to store arbitrary data types without code duplication.
 * Selected (initial capacity = 0) to avoid unnecessary heap allocation for unused containers.
 * Capacity doubles whenever the array becomes full, providing amortized O(1) append operations.
 * The array shrinks when utilization falls below 25%, improving memory utilization while avoiding excessive reallocations.
@@ -368,7 +425,7 @@ HashMap& operator=(const HashMap&) //assignment operator
 ---
 
 ### LinkedList
-
+* Implemented as a class template so that the linked list can store any copyable data type while preserving the same interface and complexity guarantees.
 * Selected a singly linked representation to reduce per-node memory overhead.
 * Maintained both head and tail pointers, allowing **O(1)** insertion at both the front and back of the list.
 * Stored the current node count as a member variable so that `size()` executes in **O(1)**.
@@ -378,7 +435,7 @@ HashMap& operator=(const HashMap&) //assignment operator
 ---
 
 ### HashMap
-
+* Implemented as a class template (template<typename Key, typename Value>), allowing arbitrary key-value mappings. The key type is required to support hashing and equality comparison.
 * Selected separate chaining using linked lists for collision handling because it simplifies deletion and integrates naturally with the LinkedList implementation.
 * Configured the HashMap to rehash when the load factor reaches 0.70, maintaining efficient average-case lookup performance.
 * Added `collisionCount()` to support benchmarking and evaluation of hash distribution during testing.

@@ -3,20 +3,20 @@
 #include <iostream>
 using namespace std;
 
+template <typename T>
 class DynamicArray {
 private:
     int size_;
     int capacity_;
-    int *data;
+    T *data;
 public:
-
     DynamicArray(){
         size_ = 0;
         capacity_ = 0;
         data = nullptr;
     }
 
-    void append(int value){
+    void append(const T& value){
         //if capacity_ 0
         if(capacity_==0)
         {
@@ -31,7 +31,7 @@ public:
         data[size_++]=value;
     }
 
-    void insert(int value,int index)
+    void insert(const T& value,int index)
     {
         //indexcheck
         if(index<0 || index>size_)
