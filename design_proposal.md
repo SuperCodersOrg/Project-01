@@ -3,7 +3,7 @@
 
 The objective of this project is to design a reusable and memory-safe Data Structure Library consisting of DynamicArray, LinkedList, and HashMap implementations.
 
-The proposed design supports explicit memory ownership. For the Design choices i evaluated multiple alternatives for each data structure and selected the one with best tradeoff keeping in mind that later on we will be using these data structures in our upcoming projects like redis lite and ensuring that the selected approach best satisfies the upcoming project requirements.
+The proposed design supports explicit memory ownership. For the Design choices i evaluated multiple alternatives for each data structure and selected the one with best tradeoff .The selected designs are intended to serve as reusable building blocks for future projects such as Redis Lite, ensuring that the chosen implementations satisfy both current functional requirements and future use cases.
 
 
 # Section 1 – Public API
