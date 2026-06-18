@@ -3,7 +3,7 @@
 
 The objective of this project is to design a reusable and memory-safe Data Structure Library consisting of DynamicArray, LinkedList, and HashMap implementations.
 
-The proposed design supports explicit memory ownership, predictable performance, and maintainability. For the Design choices i evaluated multiple alternatives for each data structure and selected the one with best tradeoff keeping in mind that later on we will be using these data structures in our upcoming projects like redis lite and ensuring that the selected approach best satisfies the upcoming project requirements.
+The proposed design supports explicit memory ownership. For the Design choices i evaluated multiple alternatives for each data structure and selected the one with best tradeoff keeping in mind that later on we will be using these data structures in our upcoming projects like redis lite and ensuring that the selected approach best satisfies the upcoming project requirements.
 
 
 # Section 1 – Public API
@@ -88,44 +88,246 @@ HashMap& operator=(const HashMap&) //assignment operator
 
 # Section 3 – Complexity Estimates
 
-| Data Structure   | Operation          | Best Case | Average Case       | Worst Case | Justification                                                                                                                   |
-| ---------------- | ------------------ | --------- | ------------------ | ---------- | ------------------------------------------------------------------------------------------------------------------------------- |
-| **DynamicArray** | `append()`         | **O(1)**  | **O(1) amortized** | **O(n)**   | Inserts directly when capacity exists. Resizing requires copying all elements but occurs infrequently due to capacity doubling. |
-|                  | `insert(index)`    | **O(1)**  | **O(n)**           | **O(n)**   | Insertion at the end requires no shifting, while insertion elsewhere shifts elements.                                |
-|                  | `remove(index)`    | **O(1)**  | **O(n)**           | **O(n)**   | Removing the last element is constant time; removing from other positions requires shifting remaining elements.                 |
-|                  | `get(index)`       | **O(1)**  | **O(1)**           | **O(1)**   | The memory address is calculated directly using the index without traversal.                                                    |
-|                  | `set(index)`       | **O(1)**  | **O(1)**           | **O(1)**   | Updates the element directly at the computed memory location.                                                                   |
-|                  | `popBack()`        | **O(1)**  | **O(1)**           | **O(1)**   | Removes the last element without shifting any data.                                                                             |
-|                  | `clear()`          | **O(1)**  | **O(1)**           | **O(1)**   | Resets the container state by updating metadata and releasing allocated memory.                                                 |
-|                  | `reserve()`        | **O(1)**  | **O(n)**           | **O(n)**   | If reallocation is required, all existing elements must be copied into the new storage.                                         |
-|                  | `size()`           | **O(1)**  | **O(1)**           | **O(1)**   | The current element count is maintained as a member variable.                                                                   |
-|                  | `capacity()`       | **O(1)**  | **O(1)**           | **O(1)**   | Returns the stored capacity value directly.                                                                                     |
-|                  | `isEmpty()`        | **O(1)**  | **O(1)**           | **O(1)**   | Checks whether the stored size equals zero.                                                                                     |
-| **LinkedList**   | `insertFront()`    | **O(1)**  | **O(1)**           | **O(1)**   | Only the head pointer is updated.                                                                                               |
-|                  | `insertBack()`     | **O(1)**  | **O(1)**           | **O(1)**   | The maintained tail pointer enables direct insertion at the end.                                                                |
-|                  | `insert(index)`    | **O(1)**  | **O(n)**           | **O(n)**   | Insertion at the front is constant time; otherwise traversal to the target position is required.                                |
-|                  | `removeFront()`    | **O(1)**  | **O(1)**           | **O(1)**   | Removes the head node by updating a single pointer.                                                                             |
-|                  | `remove(index)`    | **O(1)**  | **O(n)**           | **O(n)**   | Removal at the front is constant time; arbitrary positions require traversal.                                                   |
-|                  | `search()`         | **O(1)**  | **O(n)**           | **O(n)**   | Best case occurs when the element is at the head, while average and worst cases require sequential traversal.                   |
-|                  | `clear()`          | **O(n)**  | **O(n)**           | **O(n)**   | Every allocated node must be visited and deleted.                                                                               |
-|                  | `print()`          | **O(n)**  | **O(n)**           | **O(n)**   | Every node is traversed once for output.                                                                                        |
-|                  | `size()`           | **O(1)**  | **O(1)**           | **O(1)**   | The node count is maintained as a member variable.                                                                              |
-|                  | `isEmpty()`        | **O(1)**  | **O(1)**           | **O(1)**   | Checks whether the stored node count is zero.                                                                                   |
-| **HashMap**      | `set()`            | **O(1)**  | **O(1)**           | **O(n)**   | Direct bucket access through hashing; worst case occurs when all keys map to one bucket.                                        |
-|                  | `get()`            | **O(1)**  | **O(1)**           | **O(n)**   | Bucket lookup is constant on average, but severe collisions require traversing an entire chain.                                 |
-|                  | `exists()`         | **O(1)**  | **O(1)**           | **O(n)**   | Uses the same lookup process as `get()`.                                                                                        |
-|                  | `remove()`         | **O(1)**  | **O(1)**           | **O(n)**   | Removal is constant on average but may require traversing a long collision chain.                                               |
-|                  | `clear()`          | **O(n)**  | **O(n)**           | **O(n)**   | Every stored key-value pair must be removed and memory released.                                                                |
-|                  | `size()`           | **O(1)**  | **O(1)**           | **O(1)**   | Returns the maintained element count.                                                                                           |
-|                  | `loadFactor()`     | **O(1)**  | **O(1)**           | **O(1)**   | Computed directly using stored size and bucket count.                                                                           |
-|                  | `collisionCount()` | **O(1)**  | **O(1)**           | **O(1)**   | Returns the maintained collision counter.                                                                                       |
-|                  | `rehash()`         | **O(n)**  | **O(n)**           | **O(n)**   | Every existing key-value pair must be rehashed and inserted into the new bucket array.    
----                                      
+## 1. DynamicArray
 
-- The average-case complexity of the HashMap assumes a well-distributed hash function and a maintained load factor below the rehash threshold.
-- DynamicArray append() is O(1) amortized because the array is resized only occasionally. Although resizing copies all elements, it happens rarely, so the average time for each append operation remains O(1).
+### append()
+
+* **Best Case:** O(1)
+* **Average Case:** O(1) amortized
+* **Worst Case:** O(n)
+
+**Why:** If free capacity exists, the element is inserted directly at the end. When the array becomes full, a larger array is allocated and all existing elements are copied. Since resizing occurs only occasionally due to capacity doubling, the average cost per insertion remains O(1).
 
 ---
+
+### insert(index)
+
+* **Best Case:** O(1)
+* **Average Case:** O(n)
+* **Worst Case:** O(n)
+
+**Why:** Inserting at the end requires no shifting. For other positions, all subsequent elements must be shifted one position to the right.
+
+---
+
+### remove(index)
+
+* **Best Case:** O(1)
+* **Average Case:** O(n)
+* **Worst Case:** O(n)
+
+**Why:** Removing the last element requires no shifting. Removing an element from any other position requires shifting all following elements left by one position.
+
+---
+
+### get(index)
+
+* **Best Case:** O(1)
+* **Average Case:** O(1)
+* **Worst Case:** O(1)
+
+**Why:** The required memory address is calculated directly using the index without traversing the array.
+
+---
+
+### set(index)
+
+* **Best Case:** O(1)
+* **Average Case:** O(1)
+* **Worst Case:** O(1)
+
+**Why:** The element is updated directly at the calculated memory location.
+
+---
+
+### popBack()
+
+* **Best Case:** O(1)
+* **Average Case:** O(1)
+* **Worst Case:** O(1)
+
+**Why:** The last element is removed by simply decreasing the stored size.
+
+---
+
+### clear()
+
+* **Best Case:** O(1)
+* **Average Case:** O(1)
+* **Worst Case:** O(1)
+
+**Why:** The array releases its allocated memory and resets its metadata.
+
+---
+
+### reserve()
+
+* **Best Case:** O(1)
+* **Average Case:** O(n)
+* **Worst Case:** O(n)
+
+**Why:** If the requested capacity is already available, no action is required. Otherwise, a larger array is allocated and all existing elements are copied.
+
+---
+
+### size(), capacity(), isEmpty()
+
+* **Best Case:** O(1)
+* **Average Case:** O(1)
+* **Worst Case:** O(1)
+
+**Why:** These functions simply return values stored as member variables.
+
+---
+
+## 2. LinkedList
+
+### insertFront()
+
+* **Best / Average / Worst:** O(1)
+
+**Why:** Only the head pointer needs to be updated.
+
+---
+
+### insertBack()
+
+* **Best / Average / Worst:** O(1)
+
+**Why:** The maintained tail pointer allows direct insertion without traversal.
+
+---
+
+### insert(index)
+
+* **Best Case:** O(1)
+* **Average Case:** O(n)
+* **Worst Case:** O(n)
+
+**Why:** Insertion at the front is constant time. Otherwise, traversal is required to reach the target position.
+
+---
+
+### removeFront()
+
+* **Best / Average / Worst:** O(1)
+
+**Why:** The head pointer is updated to the next node.
+
+---
+
+### remove(index)
+
+* **Best Case:** O(1)
+* **Average Case:** O(n)
+* **Worst Case:** O(n)
+
+**Why:** Removing the first node is constant time, while removing nodes at arbitrary positions requires traversal.
+
+---
+
+### search()
+
+* **Best Case:** O(1)
+* **Average Case:** O(n)
+* **Worst Case:** O(n)
+
+**Why:** The best case occurs when the element is the first node. Otherwise, nodes are visited sequentially until the element is found or the list ends.
+
+---
+
+### clear()
+
+* **Best / Average / Worst:** O(n)
+
+**Why:** Every allocated node must be visited and deleted individually.
+
+---
+
+### print()
+
+* **Best / Average / Worst:** O(n)
+
+**Why:** Every node must be traversed to display its value.
+
+---
+
+### size(), isEmpty()
+
+* **Best / Average / Worst:** O(1)
+
+**Why:** The current node count is maintained as a member variable.
+
+---
+
+## 3. HashMap
+
+### set()
+
+* **Best Case:** O(1)
+* **Average Case:** O(1)
+* **Worst Case:** O(n)
+
+**Why:** The hash function directly computes the bucket index. Worst-case complexity occurs when all keys hash into the same bucket.
+
+---
+
+### get()
+
+* **Best Case:** O(1)
+* **Average Case:** O(1)
+* **Worst Case:** O(n)
+
+**Why:** Lookup usually accesses a short collision chain. In the worst case, every key belongs to the same bucket.
+
+---
+
+### exists()
+
+* **Best Case:** O(1)
+* **Average Case:** O(1)
+* **Worst Case:** O(n)
+
+**Why:** This operation performs the same lookup process as `get()`.
+
+---
+
+### remove()
+
+* **Best Case:** O(1)
+* **Average Case:** O(1)
+* **Worst Case:** O(n)
+
+**Why:** Deletion is efficient when collision chains are short but may require traversing an entire chain in the worst case.
+
+---
+
+### clear()
+
+* **Best / Average / Worst:** O(n)
+
+**Why:** Every key-value pair stored in the HashMap must be deleted.
+
+---
+
+### size(), loadFactor(), collisionCount()
+
+* **Best / Average / Worst:** O(1)
+
+**Why:** These operations return values maintained as member variables.
+
+---
+
+### rehash()
+
+* **Best / Average / Worst:** O(n)
+
+**Why:** Every existing key-value pair must be hashed again and inserted into the new bucket array.
+
+---
+
+**Note:** The average-case complexity of the HashMap assumes a well-distributed hash function and a maintained load factor below the rehash threshold.
+
 # Section 4 – Design Decisions
 
 ### DynamicArray
