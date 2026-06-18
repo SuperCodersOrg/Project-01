@@ -1,0 +1,47 @@
+#pragma once
+
+#include <iostream>
+using namespace std;
+
+class DynamicArray {
+private:
+    int size;
+    int capacity;
+    int *data;
+public:
+
+    DynamicArray(){
+        size = 0;
+        capacity = 0;
+        data = nullptr;
+    }
+
+    void append(int value){
+        if(capacity==0)
+        {
+            capacity=1;
+            data = new int [capacity];
+        }
+        if(size==capacity)
+        {
+            int oldcapacity = capacity;
+            capacity*=2;
+            int *arr = new int [capacity];
+            for(int i=0;i<size;i++)
+            {
+                arr[i]=data[i];
+            }
+            delete []data;
+            data = arr;
+        }
+        data[size++]=value;
+    }
+
+    void print()
+    {
+        for(int i=0;i<size;i++)
+        {
+            cout<<data[i]<<" ";
+        }
+    }
+};

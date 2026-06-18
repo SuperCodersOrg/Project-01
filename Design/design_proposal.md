@@ -19,7 +19,7 @@ void remove(int index) //remove element
 bool get(int index, int& value) const //returns value
 void set(int index, int value) // modify value at given index
 void reserve(int newCapacity) //preallocate storage 
-void popBack() //remove last element
+int popBack() //return last element and remove it
 void clear() //remove all elements
 int size() const //return element count
 int capacity() const //return allocated capacity
