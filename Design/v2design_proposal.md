@@ -3,7 +3,7 @@
 
 The objective of this project is to design a reusable, generic and memory-safe Data Structure Library consisting of DynamicArray, LinkedList, and HashMap implementations.
 
-The proposed design supports explicit memory ownership. For the Design choices i evaluated multiple alternatives for each data structure and selected the one with best tradeoff .The selected designs are intended to serve as reusable building blocks for future projects such as Redis Lite, ensuring that the chosen implementations satisfy both current functional requirements and future use cases.
+The proposed design supports explicit memory ownership. For the Design choices i evaluated multiple pros and cons for each data structure and selected the efficent ones which fullfil our requirements .The selected designs are intended to serve as reusable building blocks for future projects such as Redis Lite, ensuring that the chosen implementations satisfy both current functional requirements and future use cases.
 
 
 # Section 1 – Public API
@@ -20,27 +20,20 @@ class DynamicArray {
         T *data;
         void resize(int newCapacity); //internal method to resize the array
     public:
-        DynamicArray() //construct empty array
-        explicit DynamicArray(int capacity) //construct an array of given capacity
+        DynamicArray(int capacity=0) //construct empty array
         template<typename Iterator>
         DynamicArray(Iterator start,Iterator end); //construct from any iterable container
         void append(const T& value) //append element
         void insert(const T& value, int index) //insert at position
         void remove(int index) //remove element
-        T popBack() //return last element and remove it
         bool get(int index,T& value) const //returns value safely
         void set(int index,const T& value) // modify value at given index
         void reserve(int newCapacity) //preallocate storage 
         void clear() //remove all elements
         int size() const //return element count
-        int capacity() const //return allocated capacity
-        bool isEmpty() const //check whether empty 
-        T& operator[](int index) // Raw and fast access
-        const T& operator[](int index) const 
+        bool isEmpty() const //check whether empty
         T* begin() //return pointer to first element
         T* end() //return pointer to one past last element
-        const T* begin() const //return pointer to first element
-        const T* end() const //return pointer to one past last element
         ~DynamicArray() //destructor
         DynamicArray(const DynamicArray&) //copy constructor
         DynamicArray& operator=(const DynamicArray&) //assignment operator
@@ -49,72 +42,87 @@ class DynamicArray {
 - The get() method returns the requested element through a reference parameter and uses a boolean return value to indicate success, avoiding ambiguous sentinel values for invalid indices.  
 - The reserve() method enables preallocation of storage when the expected number of elements is known, reducing the number of reallocations during repeated insertions.  
 - A dedicated set() method separates modification from insertion operations.  
-- Utility functions such as `popBack()`,` clear()`,` capacity()`, and `isEmpty()` improve the usability and completeness of the Data Structure.
+- Utility functions such as ` clear()` and `isEmpty()` improve the usability and completeness of the Data Structure.
 - `begin()` and `end()` methods provide iterators for return pointers to start and past to end memory address.
 - `DynamicArray(Iterator start,Iterator end) `constructor allows construction from any iterable container.
 
 ---
 
 ### 2. LinkedList 
-The LinkedList is implemented using compile-time polymorphism (if constexpr and template specialization) to act as a hybrid data structure. It defaults to a singly linked structure to minimize per-node memory overhead, but can be instantiated as a doubly linked list at compile time with zero runtime branching. It maintains head and tail pointers along with the current node count to guarantee constant time insertion at both ends.
-Methods - 
+The linked list functionality is divided into two distinct data structures: `SinglyLinkedList` for strict memory efficiency, and `DoublyLinkedList` for high-performance bidirectional operations.
 
+### 1. SinglyLinkedList 
+The SinglyLinkedList is designed for maximum memory efficiency, making it the ideal choice for scenarios with strict memory constraints or as the underlying collision chain for the HashMap. It maintains both `head` and `tail` pointers along with a node count to guarantee constant-time insertions at both ends without the overhead of bidirectional pointers.
+
+**Methods -** 
 ```cpp
-template<typename T, bool IsDoubly = false>
-class LinkedList {
+
+template<typename T> //used to make the linked list generic ie it can store any type of data in the list
+class ForwardList {
     private:
-        template<typename U, bool Doubly> struct Node;
-        // Singly Linked Node 
-        template<typename U>
-        struct Node<U, false> {
-            U data;
+        struct Node {
+            T data;
             Node* next;
-            Node(const U& value)
-            bool operator==(const Node& other) const { return this->data == other.data; }
-            ostream& operator<<(ostream& os, const Node& node) { return os << node.data; }
+            Node(const T& value)
         };
-        // Doubly Linked Node 
-        template<typename U>
-        struct Node<U, true> {
-            U data;
-            Node* next;
-            Node* prev;
-            Node(const U& value)
-            bool operator==(const Node& other) const { return this->data == other.data; }
-            ostream& operator<<(ostream& os, const Node& node) { return os << node.data; }
-        };
-        using NodeType = Node<T, IsDoubly>;
-        NodeType* head;
-        NodeType* tail;
+        Node* head;
+        Node* tail;
         int count;
     public:
-        LinkedList(); //construct empty linkedlist
+        ForwardList(); //construct empty list
         template<typename Iterator>
-        LinkedList(Iterator start, Iterator end); //construct from any iterator range
-        void insertFront(const T& value); //insert at front
-        void insertBack(const T& value); //insert at end 
-        void insert(const T& value, int index); //insert at position
-        void removeFront(); //remove first node
-        void removeBack(); //remove last node (O(n) for singly, O(1) for doubly)
-        void remove(int index); //remove node from a specific position
+        ForwardList(Iterator start, Iterator end); //construct from any iterable container
+        void insert(const T& value, int index); //insert at position (O(n))
+        void remove(int index); //remove node from a specific position (O(n))
         bool get(int index, T& value) const; //safely retrieve value by index
         int search(const T& value) const; //search element and return index
         void clear(); //delete all nodes
         void print() const; //display all contents 
-        int size() const; //return node count
+        int size() const; //return node count (O(1))
+        bool isEmpty() const; //check whether empty
+        ~ForwardList(); //destructor
+        ForwardList(const ForwardList&); //copy constructor
+        ForwardList& operator=(const ForwardList&); //assignment operator
+};
+```
+- Wildcard Construction: The template<typename Iterator> constructor allows the list to be safely built from any iterable C++ collection (like vector or raw arrays) without relying on unpredictable container types.
+- Safe Retrieval: The get() method returns the requested element through a reference parameter and uses a boolean return value to indicate success, avoiding ambiguous sentinel values for invalid indices.
+- Improved Searching: The search() method returns the exact index of the found element or -1 if not found, providing more useful systemic information than a simple boolean result.
+
+### 2 . DoublyLinkedList
+
+The DoublyLinkedList trades a small amount of memory per node (for the prev pointer) to achieve vastly superior deletion speeds. By allowing bidirectional traversal, it eliminates the need for O(n) traversals during tail deletions, making it highly suitable for applications like LRU Caches.
+
+Methods - 
+```cpp
+template<typename T> //used to make the linked list generic so that it can store any type of data in the list
+class LinkedList {
+    private:
+        struct Node {
+            T data;
+            Node* next;
+            Node* prev;
+            Node(const T& value)
+        };
+        Node* head;
+        Node* tail;
+        int count;
+    public:
+        LinkedList(); //construct empty list 
+        template<typename Iterator>
+        LinkedList(Iterator start, Iterator end); //construct from any iterator range
+        void insert(const T& value, int index); //insert at position (O(n))
+        void remove(int index); //remove node from a specific position (O(n))
+        bool get(int index, T& value) const; //safely retrieve value by index
+        int search(const T& value) const; //search element and return index
+        void clear(); //delete all nodes
+        void print() const; //display all contents 
+        int size() const; //return node count (O(1))
         bool isEmpty() const; //check whether empty
         ~LinkedList(); //destructor
         LinkedList(const LinkedList&); //copy constructor
         LinkedList& operator=(const LinkedList&); //assignment operator
 };
-```
-- Compile-Time Polymorphism using IsDoubly template parameter allows the structure to operate as a highly memory-efficient singly linked list (default) for operations like Hash Map chaining, while offering a zero-runtime-overhead toggle to a doubly linked list if fast tail deletions are required in future systems.
-- The template<typename Iterator> constructor allows the list to be safely built from any iterable C++ collection without relying on unpredictable container types.
-- The get() method returns the requested element through a reference parameter and uses a boolean return value to indicate success, avoiding ambiguous sentinel values for invalid indices.
-- The insertBack() method uses the tail pointer to achieve O(1) insertion at the end of the list, improving time complexity for common use cases
-- The search() method returns the index of the found element or -1 if not found, providing more useful information than a simple boolean result.
-- Utility functions such as `remove()`,` clear()`, and `isEmpty()` improve the usability and completeness of the Data Structure.
-
 ---
 
 ## HashMap
@@ -122,26 +130,24 @@ It uses separate chaining using linkedlist for collision resolution and DynamicA
 Methods - 
 
 ```cpp
-template<typename Key> struct DefaultHash; 
+template<typename Key> struct DefaultHash; //an empty blueprint for hashing 
 template<>
-struct DefaultHash<std::string>
+struct DefaultHash<string>//default hash blueprint for string keys(DJB2 algorithm)
 template<>
-struct DefaultHash<int>
-
-template<typename Key, typename Value, typename Hash = DefaultHash<Key>> 
+struct DefaultHash<int>//default hash blueprint for integer keys (simple modulo with key multiplied with a large prime number)
+template<typename Key, typename Value, typename Hash = DefaultHash<Key>> //template to make the hashmap generic and allow custom hash functors.
 class HashMap {
     private:
         struct Node {
             Key key; Value value; Node* next;
             Node(const Key& k, const Value& v)
         };
-        DynamicArray<Node*> buckets; 
-        double loadFactor;
-        int elementCount;
-        int collisionCount;
-        int primeindex;
+        DynamicArray<Node*> buckets; //It is an array where every slot holds a chain of boxes (Nodes)
+        double loadFactor; //threshold to trigger rehashing
+        int elementCount; /
+        int primeindex; 
         static constexpr int PRIME_SIZES[] //takes some memory - giving O(1) lookup for next prime size 
-        int getBucketIndex(const Key& key) const
+        int getBucketIndex(const Key& key) const //internal method to compute bucket index using the hash functor
     public:
         HashMap(int initialBucketCount = 13, double loadFactor = 0.75); //construct with bucket count and load factor
         void set(const Key& key, const Value& value); //insert or update key-value pair
@@ -151,7 +157,6 @@ class HashMap {
         void clear(); //delete all entries and reset state
         int size() const; //return sstored element count    
         double loadFactor() const; //return current load factor
-        int collisionCount() const; //return total number of collisions across all buckets
         void rehash(); //resize bucket table and rehash entries
         ~HashMap(); //destructor
         HashMap(const HashMap&); //copy constructor
@@ -160,9 +165,8 @@ class HashMap {
 ```
 - The `get()` method returns the associated value through a reference parameter and uses a boolean return value to indicate success, avoiding ambiguous sentinel values for missing keys.
 - Trades ~100 bytes of memory for a static array of prime numbers. This prevents massive CPU stalls during resizing and naturally scatters keys to avoid collision clustering.
-- Uses an injectable functor for custom data types. This follows the Open-Closed Principle, safely supporting complex keys without altering core library code.
+- Uses an injectable functor for custom data types.
 - Constructor accepts custom capacities and load factors, allowing systems to explicitly tune the tradeoff between memory footprint and guaranteed O(1) lookup speeds.
-- Includes an internal collision tracker to evaluate hash distribution and the mathematical quality of injected hash functors. 
 
 # Section 2 - Memory Layout
 ## DynamicArray
@@ -208,11 +212,7 @@ class HashMap {
 * **Average / Worst Case:** O(n)
 * **Why:** Similar to insertion, removing an element from the middle of a contiguous array requires shifting all subsequent elements one position to the left to fill the memory gap.
 
-**popBack()**
-* **Best / Average / Worst Case:** O(1)
-* **Why:** This operation simply decrements the internal `size_` counter. It does not require memory reallocation or shifting any elements.
-
-**get(int index, T& value) / set(int index, const T& value) / operator[]**
+**get(int index, T& value) / set(int index, const T& value) 
 * **Best / Average / Worst Case:** O(1)
 * **Why:** The index directly calculates the exact memory address without requiring any traversal.
 
@@ -221,29 +221,13 @@ class HashMap {
 * **Worst Case:** O(n)
 * **Why:** If a size increase is required, it must allocate a new heap array and sequentially copy all `n` existing elements over to the new memory block.
 
-**clear() / size() / capacity() / isEmpty()**
+**clear() / size() / isEmpty()**
 * **Best / Average / Worst Case:** O(1)
 * **Why:** These operations merely return or reset primitive internal state variables (like integers and pointers) without interacting with the stored data.
 
 ---
 
 ### 2. LinkedList
-
-**insertFront(const T& value)**
-* **Best / Average / Worst Case:** O(1)
-* **Why:** A new node is allocated on the heap, its `next` pointer is linked to the current head, and the head pointer is reassigned. No traversal is required.
-
-**insertBack(const T& value)**
-* **Best / Average / Worst Case:** O(1)
-* **Why:** Because the class actively maintains a `tail` pointer, the new node can be attached directly to the end of the list instantly without traversing from the head.
-
-**removeFront()**
-* **Best / Average / Worst Case:** O(1)
-* **Why:** The head pointer is simply moved to `head->next`, and the original head node is deleted from the heap.
-
-**removeBack()**
-* **Best / Average / Worst Case:** O(1) if `IsDoubly = true`, O(n) if `IsDoubly = false`
-* **Why:** If compiled as a Doubly Linked List, the `prev` pointer allows instant access to the second-to-last node to update the tail. If compiled as a Singly Linked List, it lacks a `prev` pointer and must linearly traverse from the head to find the node immediately preceding the tail.
 
 **insert(const T& value, int index) / remove(int index)**
 * **Best Case:** O(1) (if index is 0)
@@ -286,7 +270,7 @@ class HashMap {
 * **Best / Average / Worst Case:** O(n)
 * **Why:** The map must loop through every array bucket and subsequently traverse and `delete` every linked node within every collision chain to properly release all heap memory.
 
-**size() / currentLoadFactor() / collisionCount()**
+**size() / currentLoadFactor() 
 * **Best / Average / Worst Case:** O(1)
 * **Why:** These methods perform basic arithmetic or simply return tracked primitive state variables, independent of the volume of data stored in the map.
 
@@ -313,7 +297,6 @@ class HashMap {
 * Static Compile-Time Prime Capacity Array is used instead of Resizing by powers of 2 (e.g., capacity * 2) or calculating prime numbers algorithmically at runtime using a while(!isPrime()) loop because power-of-2 capacities cause severe collision clustering if a user provides a weak hash function, because the modulo operator effectively ignores the higher order bits of the hash. While calculating primes at runtime solves this, it introduces an unacceptable O(n​) CPU stall during the already expensive O(n) rehashing phase. A static prime array resolves both issues, trading ~100 bytes of memory for instantaneous, mathematically safe capacity lookups.
 * Selected separate chaining using linked lists for collision handling because it simplifies deletion and integrates naturally with the LinkedList implementation.
 * Configured the HashMap to rehash when the load factor reaches 0.75 in default case, maintaining efficient average-case lookup performance while the load factor can be set by passing the required load factor in the constructor.
-* Added `collisionCount()` to support benchmarking and evaluation of hash distribution during testing.
 * Implemented `get()` using a reference parameter and boolean return value, avoiding ambiguous sentinel values for missing keys.
 * Considered linear probing, but rejected it due to clustering and more complex deletion.
 * Considered*Red-Black Tree buckets, but rejected them because the additional balancing logic and implementation complexity were not justified for the expected performance.
