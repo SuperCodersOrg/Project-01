@@ -27,6 +27,7 @@ private:
         data = arr;
         capacity_ = newCapacity;
     }
+    
 public:
     //constructor
     DynamicArray(int cap=0){
@@ -112,6 +113,13 @@ public:
             cout<<"Invalid Index";
         }
         data[index]=value;
+    }
+
+    //to preallocate memory for the dynamic array
+    void reserve(int newCapacity_)
+    {
+        if(capacity_>newCapacity_)return;
+        resize(newCapacity_);
     }
 
     //testing purpose
