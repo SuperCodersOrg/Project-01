@@ -27,7 +27,7 @@ private:
         data = arr;
         capacity_ = newCapacity;
     }
-    
+
 public:
     //constructor
     DynamicArray(int cap=0){
@@ -50,6 +50,7 @@ public:
             data[size_++]=*it;
         }
     }
+    
     //add an element to the end
     void append(const T& value){
         //resize
@@ -121,6 +122,20 @@ public:
         if(capacity_>newCapacity_)return;
         resize(newCapacity_);
     }
+
+    //to remove all the elements
+    void clear()
+    {
+        size_=0;
+    }
+
+    //returns size of the array
+    void size()
+    {
+        return size_;
+    }
+
+    
 
     //testing purpose
     void print()const
