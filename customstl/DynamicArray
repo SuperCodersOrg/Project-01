@@ -135,6 +135,25 @@ public:
         return size_;
     }
 
+    //check if the array is empty
+    bool isEmpty()
+    {
+        if(size_==0)return true;
+        return false;
+    }
+
+    //returns the base address
+    T* begin()
+    {
+        return data;
+    }
+
+    //returns the ending + 1 address
+    T* end()
+    {
+        return data + size_;
+    }
+
     
 
     //testing purpose
