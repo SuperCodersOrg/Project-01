@@ -9,6 +9,7 @@ private:
     int size_;
     int capacity_;
     T *data;
+
     //resize helper
     void resize(int newCapacity)
     {
@@ -26,6 +27,7 @@ private:
         data = arr;
         capacity_ = newCapacity;
     }
+
 public:
     //constructor
     DynamicArray(int cap=0){
@@ -48,6 +50,7 @@ public:
             data[size_++]=*it;
         }
     }
+    
     //add an element to the end
     void append(const T& value){
         //resize
@@ -96,10 +99,43 @@ public:
     }
     
     //to retrieve an element from the dynamic array safely
-    bool get(int index,T& value)
+    bool get(int index,T& value)const
     {
-
+        if(index<0 || index>=size_)return false;
+        value = data[index];
+        return true;
     }
+
+    //to modify an element at the given index
+    void set(int index,T& value)
+    {
+        if(index<0 || index>=size)
+        {
+            cout<<"Invalid Index";
+        }
+        data[index]=value;
+    }
+
+    //to preallocate memory for the dynamic array
+    void reserve(int newCapacity_)
+    {
+        if(capacity_>newCapacity_)return;
+        resize(newCapacity_);
+    }
+
+    //to remove all the elements
+    void clear()
+    {
+        size_=0;
+    }
+
+    //returns size of the array
+    void size()
+    {
+        return size_;
+    }
+
+    
 
     //testing purpose
     void print()const
