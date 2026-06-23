@@ -92,7 +92,7 @@ public:
         //indexcheck
         if(index<0 || index>size_)
         {
-            std::cout<< "Error - Invalid Index"<<endl;
+            std::cout<< "Error - Invalid Index"<<std::endl;
             return;
         }
         if(size_==capacity_)
@@ -112,7 +112,7 @@ public:
     {
         if(index<0 || index>=size_)
         {
-            std::cout<< "Error - Invalid Index"<<endl;
+            std::cout<< "Error - Invalid Index"<<std::endl;
             return;
         }
         for(int i=index;i<size_-1;i++)
