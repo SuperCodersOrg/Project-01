@@ -1,6 +1,8 @@
 #pragma once
 
 #include <iostream>
+#include <cstdlib>
+#include <new>
 
 template <typename T>
 class DynamicArray {
@@ -9,240 +11,46 @@ private:
     int capacity_;
     T *data;
 
-    //resize helper
-    void resize(int newCapacity)
-    {
-        if(newCapacity<size_)return;
-
-        T* arr = new T[newCapacity];
-
-        for(int i = 0; i < size_; i++)
-        {
-            arr[i] = data[i];
-        }
-
-        delete[] data;
-
-        data = arr;
-        capacity_ = newCapacity;
-    }
-
-    //copy helper
-    void copyfrom(const DynamicArray& arr)
-    {
-        size_=arr.size_;
-        capacity_=arr.capacity_;
-        data=nullptr;
-        if(capacity_>0)
-        {
-            data=new T[capacity_];
-            for(int i=0;i<size_;i++)
-            {
-                data[i]=arr.data[i];
-            }
-        }
-    }
-    
-public:
-    //constructor
-    DynamicArray(int cap=0){
-        size_=0;
-        capacity_=cap;
-        data=nullptr;
-        if (capacity_>0)data = new T[capacity_];
-    }
-     
-    //make a dynamic array through any iterable data structure
-    template <typename Iterator>
-    DynamicArray(Iterator start,Iterator end)
-    {
-        size_=0;
-        capacity_=4;
-        data = new T[capacity_];
-        for(auto it=start;it!=end;it++)
-        {
-            append(*it);
-        }
-    }
-
-    template<typename Ds>
-    DynamicArray(const Ds& ds)
-    {
-        size_ = 0;
-        capacity_ = 4;
-        data = new T[capacity_];
-
-        for(auto it = ds.begin(); it != ds.end(); ++it)
-        {
-            append(*it);
-        }
-    }
-    
-    //add an element to the end
-    void append(const T& value){
-        //resize
-        if(size_==capacity_)resize(capacity_==0?1:capacity_*2);
-        //normally
-        data[size_++]=value;
-    }
-
-    //add an element at the given index
-    void insert(const T& value,int index)
-    {
-        //indexcheck
-        if(index<0 || index>size_)
-        {
-            std::cout<< "Error - Invalid Index"<<std::endl;
-            return;
-        }
-        if(size_==capacity_)
-        {
-            resize(capacity_ == 0 ? 1 : capacity_ * 2);
-        }
-        for(int i=size_;i>index;i--)
-        {
-            data[i]=data[i-1];
-        }
-        data[index]=value;
-        size_++;
-    }
-
-    //remove an element from the given index
-    void remove(int index)
-    {
-        if(index<0 || index>=size_)
-        {
-            std::cout<< "Error - Invalid Index"<<std::endl;
-            return;
-        }
-        for(int i=index;i<size_-1;i++)
-        {
-            data[i]=data[i+1];
-        }
-        size_--;
-        //shrink by /2 if less then 25%
-        if(capacity_>4 && size_<capacity_/4)
-        resize(capacity_/2);
-    }
-    
-    //to retrieve an element from the dynamic array safely
-    bool get(int index,T& value)const
-    {
-        if(index<0 || index>=size_)return false;
-        value = data[index];
-        return true;
-    }
-
-    //to modify an element at the given index
-    void set(int index,const T& value)
-    {
-        if(index<0 || index>=size_)
-        {
-            std::cout<<"Invalid Index";
-            return;
-        }
-        data[index]=value;
-    }
-
-    //to preallocate memory for the dynamic array
-    void reserve(int newCapacity_)
-    {
-        if(capacity_>newCapacity_)return;
-        resize(newCapacity_);
-    }
-
-    //to remove all the elements
-    void clear()
-    {
-        size_=0;
-    }
-
-    //returns size of the array
-    int size()const
-    {
-        return size_;
-    }
-
-    //return the capacity of the array
-    int capacity()const
-    {
-        return capacity_;
-    }
-
-    //check if the array is empty
-    bool isEmpty()const
-    {
-        if(size_==0)return true;
-        return false;
-    }
-
-    //returns the base address
-    T* begin()
-    {
-        return data;
-    }
-
-    //returns the ending + 1 address
-    T* end()
-    {
-        return data + size_;
-    }
-
-    //returns the base address
-    const T* begin()const 
-    {
-        return data;
-    }
-
-    //returns the ending + 1 address
-    const T* end()const
-    {
-        return data + size_;
-    }
-
-    T& operator[](int index)
-    {
-        return data[index];
-    }
-    
-    const T& operator[](int index) const
-    {
-        return data[index];
-    }
-
-    //testing purpose
-    void print()const
+    void destroyElements()
     {
         for(int i=0;i<size_;i++)
         {
-            std::cout<<data[i]<<" ";
+            (data+i)->~T();
         }
     }
 
-    //copy constructor
-    DynamicArray(const DynamicArray& arr)
+public:
+    //constructor
+    DynamicArray()
     {
-        copyfrom(arr);
+        size_=0;
+        capacity_=0;
+        data=nullptr;
     }
-
-    //assignment operator
-    DynamicArray& operator=(const DynamicArray& arr)
+    
+    //capacity constructor
+    DynamicArray(int cap)
     {
-        if(this == &arr)
+        size_=0;
+        capacity_=cap;
+        if(capacity_>0)
         {
-            return *this;
+            data = static_cast<T*>(malloc(sizeof(T)*capacity_));
         }
-
-        delete[] data;
-        copyfrom(arr);
-        return *this;
+        else
+        {
+            data=nullptr;
+        }
     }
 
     //destructor
     ~DynamicArray()
     {
-        delete[] data;
-        capacity_=0;
+        destroyElements();
+        free(data);
+        data=nullptr;
         size_=0;
+        capacity_=0;
     }
 };
+
