@@ -10,27 +10,62 @@ private:
     int size_;
     int capacity_;
     T *data;
+//helper methods - 
 
-    void destroyElements()
-    {
+    //method to manually call destructors for each element in the array
+    void destroyElements(){
         for(int i=0;i<size_;i++)
         {
             (data+i)->~T();
         }
     }
 
+    //internal method to resize the array whenever needed
+    void resize(int newcap){
+        if(newcap<=capacity_)return;
+        //grabs raw memory in void* and then cast it into T* pointer
+        T* newData = static_cast<T*>(malloc(sizeof(T)*newcap));
+        for(int i=0;i<size_;i++)
+        {
+            //creates new objects using placement new in the memory
+            new(newData + i) T(data[i]);
+        }
+        //destroy old objs
+        destroyElements();
+        free(data);
+        data=newData;
+        capacity_=newcap;
+    }
+
+    //method to perform a deepcopy
+    void deepcopy(const DynamicArray& other){
+        size_=other.size_;
+        capacity_=other.capacity_;
+        if(capacity_==0)
+        {
+            data=nullptr;
+            return;
+        }
+        data=static_cast<T*>(malloc(sizeof(T)*capacity_));
+        for(int i=0;i<size_;i++)
+        {
+            new(data+i) T(other.data[i]);
+        }
+    }
+
+
 public:
+//constructors -
+
     //constructor
-    DynamicArray()
-    {
+    DynamicArray(){
         size_=0;
         capacity_=0;
         data=nullptr;
     }
     
     //capacity constructor
-    DynamicArray(int cap)
-    {
+    DynamicArray(int cap){
         size_=0;
         capacity_=cap;
         if(capacity_>0)
@@ -43,9 +78,51 @@ public:
         }
     }
 
+    //copy constructor to pass an array and make a copy
+    DynamicArray(const DynamicArray& other){
+        deepcopy(other);
+    }
+    
+    //assignment operator to use = operator to deepcopy that object
+    DynamicArray& operator=(const DynamicArray&other){
+        if(this == &other)return *this;
+        destroyElements();
+        free(data);
+        deepcopy(other);
+        return *this;
+    }
+
+
+//methods - 
+
+    //to add an element at the last index
+    void append(const T& value){
+        if(size_==capacity_)resize(capacity_==0?1:capacity_*2);
+        new(data+size_) T(value);
+        size_++;
+    }
+
+    //returns number of elements
+    int size()const{
+        return size_;
+    }
+
+    //testing purpose - 
+    //returns number if elements that can fit into the array
+    int capacity()const{
+        return capacity_;
+    }
+    //prints all the elements in the existing array
+    void print()const{
+        for(int i=0;i<size_;i++)
+        {
+            std::cout<<data[i]<<" ";
+        }
+        std::cout<<std::endl;
+    }
+
     //destructor
-    ~DynamicArray()
-    {
+    ~DynamicArray(){
         destroyElements();
         free(data);
         data=nullptr;

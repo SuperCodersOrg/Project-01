@@ -7,6 +7,7 @@ The proposed design supports explicit memory ownership. For the Design choices i
 
 # Dynamic Array -
 The DynamicArray manages a contiguous block of heap memory manually. Memory is allocated when capacity changes and released when the DynamicArray is destroyed. Existing elements are copied into the new allocation during resizing. 
+* It gives amortized O(1) time complexity for appending elements due to the doubling so this happens because array only doubles at powers of 2 which means that the number of operations needed would be n operations to insert n elements and (n-1) operations to copy elements during resizing  giving a total of 2n-1 operations which is for n element so for a single element it is 2n-1/n which is 2 and this can be called O(1) amortized time complexity.
 ## Public API - 
 ```cpp
 template<typename T> //generic type parameter for any type of element
