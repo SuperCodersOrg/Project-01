@@ -176,6 +176,15 @@ class SinglyList {
             count++;
         }
 
+        //insert at front
+        void insertFront(const T& value){
+            Node* newnode = allocate(value);
+            if(head==nullptr)head=tail=newnode;
+            newnode->next=head;
+            head=newnode;
+            count++;
+        }
+
         //remove at given index
         void remove(int index){
             if(index<0 || index>=count)throw std::out_of_range("SinglyList:INVALID INDEX");
@@ -206,6 +215,22 @@ class SinglyList {
             //move tail
             if(delnode == tail)tail=temp;
             destruct(delnode);
+            count--;
+        }
+
+        //remove from front
+        void removeFront(){
+            if(head == nullptr)throw std::out_of_range("EmptyList");
+            if(count==1)
+            {
+                destruct(head);
+                head=tail=nullptr; 
+                count=0;
+                return;
+            }
+            Node* front = head;
+            head=head->next;
+            destruct(front);
             count--;
         }
 
@@ -261,6 +286,23 @@ class SinglyList {
         //returns size of the linkedlist
         int size() const{
             return count;
+        }
+
+        //overloaded [] operator to access elements through it 
+        T& operator[](int index)
+        {
+            if(index<0 || index>=count)throw std::out_of_range("SinglyList: INVALID INDEX");
+            Node* curr = head;
+            for(int i=0;i<index;i++)curr=curr->next;
+            return curr->data;
+        }
+        //const
+        const T& operator[](int index) const
+        {
+            if(index<0 || index>=count)throw std::out_of_range("SinglyList: INVALID INDEX");
+            Node* curr = head;
+            for(int i=0;i<index;i++)curr=curr->next;
+            return curr->data;
         }
 
         //check whether empty

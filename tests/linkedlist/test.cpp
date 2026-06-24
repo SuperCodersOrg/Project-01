@@ -4,11 +4,11 @@ using namespace std;
 int main()
 {
     try{
-    SinglyList<int> l;
-    l.insert(0,10);
-    l.insert(0,11);
-    l.insert(1,12);
-    l.insert(3,13);
+    SinglyList<string> l;
+    l.insert(0,"garv");
+    l.insert(0,"niles");
+    l.insert(1,"anmol");
+    l.insert(3,"bhupinder");
     l.print();
     std::cout<<l.size()<<endl;
     l.remove(4);
