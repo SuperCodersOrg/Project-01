@@ -25,13 +25,16 @@ int main()
     HashMap<int,std::string,IntHash> map1;
     map1.insert(1,"Garv");
     map1.insert(2,"Nilesh");
-    map1.insert(1,"M");
     string x,y,z;
+    cout<<map1.get(1,x)<<x;
+    map1.insert(1,"M");
     cout<<map1.get(1,x)<<x;
     cout<<endl;
     cout<<map1.get(2,y)<<y;
     cout<<endl;
     cout<<map1.get(30,z)<<z;
     cout<<endl;
-
+    x="";
+    map1.remove(1);
+    cout<<map1.get(1,x)<<x;
 }
