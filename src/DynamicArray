@@ -99,6 +99,7 @@
             new(ptr) T(value);
         }
 
+        //destory a single object
         void destroyobj(T* ptr){
             ptr->~T();
         }
