@@ -1,8 +1,6 @@
     #pragma once
 
     #include <iostream>
-    #include <cstdlib>
-    #include <new>
     #include <stdexcept>
     #include <DynamicArray>
     #include <SinglyList>
@@ -10,9 +8,13 @@
     template<typename T>
     struct DefaultHash
     {   
-        size_t operator()(const T&)const{
-            static_assert(sizeof(T)==0,"No default hash available for this type");
-            return 0;
+        size_t operator()(const T& val)const{
+            std::uintptr_t addr = reinterpret_cast<std::uintptr_t>(&val);
+            addr^=(addr>>16); 
+            addr*=0x45d9f3b; 
+            addr^=(addr>>16); 
+            
+            return static_cast<size_t> (addr);
         }
 
     };
@@ -108,9 +110,9 @@
 
             //to append a key value pair in hashmap
             void insert(const Key& k,const Value& v){
-                size_t idx = BucketIndex(k);
+                size_t index = BucketIndex(k);
                 //I
-                SinglyList<Entry>& bucket = buckets[idx];
+                SinglyList<Entry>& bucket = buckets[index];
                 for(int i=0;i<bucket.size();i++){
                     if(bucket[i].key==k)
                     {
@@ -219,15 +221,10 @@
             //to get the number of collisions to check hashfunction and chaining
             int collisions() const{
                 int c = 0;
-
                 for(int i=0;i<bucketcount;i++)
                 {
-                    if(buckets[i].size() > 1)
-                    {
-                        c += buckets[i].size() - 1;
-                    }
+                    if(buckets[i].size() > 1)c += buckets[i].size() - 1;
                 }
-
                 return c;
             }
 
