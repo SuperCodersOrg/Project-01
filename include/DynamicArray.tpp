@@ -17,32 +17,36 @@
         }
     }
 
+
+    //internal method to copy elements with try catch to reduce redudancy
+    template<typename T>
+    void DynamicArray<T>::copyelements(T* copyto, const T* copyfrom, int count)
+    {
+        int i = 0;
+        try {
+            for (; i < count; i++)
+                construct(copyto + i, copyfrom[i]);
+        }
+        catch (...) {
+            for (int j = 0; j < i; j++)
+                (copyto + j)->~T();
+
+            free(copyto);
+            throw;
+        }
+    }
+
     //internal method to resize the array whenever needed
     template <typename T>
     void DynamicArray<T>::resize(int newcap){
         if(newcap<size_)return;
         //grabs raw memory in void* and then cast it into T* pointer
-        T* newData = allocate(newcap);
-        int i=0;
-        try{
-            for(;i<size_;i++)
-            {
-                //creates new objects using placement new in the memory
-                construct(newData+i,data[i]);
-            }
-        }
-        catch(...){
-            for(int j=0;j<i;j++)
-            {
-                (newData + j)->~T();   
-            }
-            free(newData);
-            throw;
-        }
+        T* newdata = allocate(newcap);
+        copyelements(newdata,data,size_); //to copy data in newdata till the given count
         //destroy old objs
         destroy();
         free(data);
-        data=newData;
+        data=newdata;
         capacity_=newcap;
     }
 
@@ -57,19 +61,10 @@
             return;
         }
         data=allocate(capacity_);
-        int i=0;
         try{
-            for(;i<size_;i++)
-            {
-                construct(data+i,other.data[i]);
-            }
+            copyelements(data,other.data,size_);
         }
-        catch(...){
-            for(int j=0;j<i;j++)
-            {
-                (data+j)->~T();
-            }
-            free(data);
+        catch(...){ //to catch the exceptions from the constructor of type T called by placement new - custom classes may allocate new mem
             data=nullptr;
             size_=0;
             capacity_=0;

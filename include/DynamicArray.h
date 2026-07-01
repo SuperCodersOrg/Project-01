@@ -13,6 +13,7 @@
         T *data;
     //helper methods - 
         void destroy();//method to manually call destructors for each element in the array
+        void copyelements(T* copyto,const T* copyfrom, int count);//internal method to copy elements from array into a new one (used in resize n deepcopy)
         void resize(int newcap);//internal method to resize the array whenever needed
         void deepcopy(const DynamicArray& other);//method to perform a deepcopy
         void init();//just to not repeat code in every constructor
