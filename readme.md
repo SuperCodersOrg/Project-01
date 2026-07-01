@@ -15,11 +15,14 @@ The goal of the project is simple: keep the code reusable, easy to reason about,
 
 ```text
 include/
-  DynamicArray.h / DynamicArray.tpp
-  SinglyList.h / SinglyList.tpp
-  HashMap.h / HashMap.tpp
+  DynamicArray.h
+  SinglyList.h
+  HashMap.h
   headers/Redis
 src/
+  DynamicArray.tpp
+  SinglyList.tpp
+  HashMap.tpp
   main.cpp
 tests/
   dynamicarray/

@@ -63,4 +63,4 @@
         ~DynamicArray();
     };
 
-#include "DynamicArray.tpp"
+#include "../src/DynamicArray.tpp"
